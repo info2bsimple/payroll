@@ -19,8 +19,11 @@ interface Employee {
   firstName: string
   lastName: string
   idCardNumber: string
-  employeeCode?: string // New field
-  providentFundId?: string // New field
+  employeeCode?: string
+  providentFundId?: string
+  dateOfBirth?: string
+  fundMembershipDate?: string
+  fundMemberType?: string
   employeeType: string
   company: string
   department: string
@@ -204,6 +207,21 @@ export default function EmployeeDetailPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-sm text-muted-foreground">รหัสสมาชิกกองทุนสำรองเลี้ยงชีพ</div>
                     <div className="font-medium">{employee.providentFundId || "-"}</div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-sm text-muted-foreground">วันเดือนปีเกิด</div>
+                    <div className="font-medium">{employee.dateOfBirth || "-"}</div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-sm text-muted-foreground">วันที่เข้าเป็นสมาชิกกองทุน</div>
+                    <div className="font-medium">{employee.fundMembershipDate || "-"}</div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-sm text-muted-foreground">ประเภทสมาชิกกองทุนฯ</div>
+                    <div className="font-medium">{employee.fundMemberType || "-"}</div>
                   </div>
                 </div>
               </CardContent>

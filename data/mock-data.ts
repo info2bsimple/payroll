@@ -1,5 +1,32 @@
+export interface Employee {
+  id: string
+  prefix: string
+  firstName: string
+  lastName: string
+  idCardNumber: string
+  employeeCode?: string
+  providentFundId?: string
+  dateOfBirth?: string
+  fundMembershipDate?: string
+  fundMemberType?: string
+  employeeType: string
+  company: string
+  department: string
+  position: string
+  startDate: string
+  bank: string
+  accountName: string
+  accountNumber: string
+  branch: string
+  salary?: number
+  status: "active" | "inactive"
+  hourlyRate?: number
+  positionAllowance?: number
+  costOfLiving?: number
+}
+
 // Mock data for employees
-export const mockEmployees = [
+export const mockEmployees: Employee[] = [
   {
     id: "EP00001",
     prefix: "นาย",
@@ -16,6 +43,8 @@ export const mockEmployees = [
     accountNumber: "1234567890",
     branch: "สาขาสีลม",
     status: "inactive",
+    employeeCode: "EMP001",
+    dateOfBirth: "15 ม.ค. 2530",
   },
   {
     id: "EP00002",
@@ -34,6 +63,10 @@ export const mockEmployees = [
     branch: "สาขาอโศก",
     salary: 29000,
     status: "active",
+    providentFundId: "PVD12345",
+    dateOfBirth: "22 ก.พ. 2535",
+    fundMembershipDate: "15 เม.ย. 2565",
+    fundMemberType: "1 - Staff",
   },
   {
     id: "EP00003",
@@ -52,6 +85,7 @@ export const mockEmployees = [
     branch: "สาขาสยาม",
     salary: 50000,
     status: "active",
+    fundMemberType: "2 - Management",
   },
   {
     id: "EP00004",
@@ -69,6 +103,9 @@ export const mockEmployees = [
     accountNumber: "1122334455",
     branch: "สาขาพระราม 9",
     status: "active",
+    dateOfBirth: "10 มี.ค. 2538",
+    fundMembershipDate: "1 ส.ค. 2563",
+    fundMemberType: "3 - Confidential",
   },
   {
     id: "EP00005",
@@ -87,5 +124,10 @@ export const mockEmployees = [
     branch: "สาขาเซ็นทรัลเวิลด์",
     salary: 30000,
     status: "active",
+    employeeCode: "EMP005",
+    providentFundId: "PVD54321",
+    dateOfBirth: "5 เม.ย. 2525",
+    fundMembershipDate: "1 ม.ค. 2567",
+    fundMemberType: "4 - Wage",
   },
 ]

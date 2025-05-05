@@ -54,6 +54,15 @@ const positions = [
   { label: "ผู้อำนวยการฝ่ายบัญชี", value: "ผู้อำนวยการฝ่ายบัญชี" },
 ]
 
+// ประเภทสมาชิกกองทุนฯ
+const fundMemberTypes = [
+  { label: "1 - Staff", value: "1 - Staff" },
+  { label: "2 - Management", value: "2 - Management" },
+  { label: "3 - Confidential", value: "3 - Confidential" },
+  { label: "4 - Wage", value: "4 - Wage" },
+  { label: "5 - อื่น ๆ", value: "5 - อื่น ๆ" },
+]
+
 // Form schema
 const formSchema = z.object({
   // Employee Information
@@ -64,8 +73,6 @@ const formSchema = z.object({
     .string()
     .length(13, "เลขบัตรประจำตัวประชาชนต้องมี 13 หลัก")
     .regex(/^\d+$/, "เลขบัตรประจำตัวประชาชนต้องเป็นตัวเลขเท่านั้น"),
-  employeeCode: z.string().optional(), // New field - optional
-  providentFundId: z.string().optional(), // New field - optional
   employeeType: z.string().min(1, "กรุณาเลือกประเภทพนักงาน"),
   company: z.string().min(1, "กรุณาเลือกสังกัดบริษัท"),
   startDate: z.date({
@@ -73,6 +80,11 @@ const formSchema = z.object({
   }),
   department: z.string().min(1, "กรุณาเลือกแผนก"),
   position: z.string().min(1, "กรุณาเลือกตำแหน่ง"),
+  employeeCode: z.string().optional(),
+  providentFundId: z.string().optional(),
+  dateOfBirth: z.date().optional(),
+  fundMembershipDate: z.date().optional(),
+  fundMemberType: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -83,8 +95,6 @@ interface Employee {
   firstName: string
   lastName: string
   idCardNumber: string
-  employeeCode?: string // New field
-  providentFundId?: string // New field
   employeeType: string
   company: string
   department: string
@@ -96,6 +106,11 @@ interface Employee {
   branch: string
   salary?: number
   status: "active" | "inactive"
+  employeeCode?: string
+  providentFundId?: string
+  dateOfBirth?: string
+  fundMembershipDate?: string
+  fundMemberType?: string
 }
 
 interface EditEmployeeFormProps {
@@ -108,10 +123,18 @@ interface EditEmployeeFormProps {
 export function EditEmployeeForm({ employee, onSave, onCancel, existingEmployees }: EditEmployeeFormProps) {
   const { toast } = useToast()
 
-  // Parse the date string to a Date object
-  const parsedDate = employee.startDate
+  // Parse the date strings to Date objects
+  const parsedStartDate = employee.startDate
     ? parse(employee.startDate, "d MMM yyyy", new Date(), { locale: th })
     : new Date()
+
+  const parsedDateOfBirth = employee.dateOfBirth
+    ? parse(employee.dateOfBirth, "d MMM yyyy", new Date(), { locale: th })
+    : undefined
+
+  const parsedFundMembershipDate = employee.fundMembershipDate
+    ? parse(employee.fundMembershipDate, "d MMM yyyy", new Date(), { locale: th })
+    : undefined
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -120,13 +143,16 @@ export function EditEmployeeForm({ employee, onSave, onCancel, existingEmployees
       firstName: employee.firstName,
       lastName: employee.lastName,
       idCardNumber: employee.idCardNumber,
-      employeeCode: employee.employeeCode || "", // New field
-      providentFundId: employee.providentFundId || "", // New field
       employeeType: employee.employeeType,
       company: employee.company,
-      startDate: parsedDate,
+      startDate: parsedStartDate,
       department: employee.department,
       position: employee.position,
+      employeeCode: employee.employeeCode || "",
+      providentFundId: employee.providentFundId || "",
+      dateOfBirth: parsedDateOfBirth,
+      fundMembershipDate: parsedFundMembershipDate,
+      fundMemberType: employee.fundMemberType || "",
     },
   })
 
@@ -159,12 +185,20 @@ export function EditEmployeeForm({ employee, onSave, onCancel, existingEmployees
       return
     }
 
-    // Format date to string
-    const formattedDate = format(data.startDate, "d MMM yyyy", { locale: th })
+    // Format dates to strings
+    const formattedStartDate = format(data.startDate, "d MMM yyyy", { locale: th })
+
+    const formattedDateOfBirth = data.dateOfBirth ? format(data.dateOfBirth, "d MMM yyyy", { locale: th }) : undefined
+
+    const formattedFundMembershipDate = data.fundMembershipDate
+      ? format(data.fundMembershipDate, "d MMM yyyy", { locale: th })
+      : undefined
 
     const updatedEmployee = {
       ...data,
-      startDate: formattedDate,
+      startDate: formattedStartDate,
+      dateOfBirth: formattedDateOfBirth,
+      fundMembershipDate: formattedFundMembershipDate,
     }
 
     onSave(updatedEmployee)
@@ -315,6 +349,142 @@ export function EditEmployeeForm({ employee, onSave, onCancel, existingEmployees
                     )}
                   />
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>วันเดือนปีเกิด</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "d MMMM yyyy", { locale: th })
+                                ) : (
+                                  <span>เลือกวันที่</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="fundMembershipDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>วันที่เข้าเป็นสมาชิกกองทุน</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "d MMMM yyyy", { locale: th })
+                                ) : (
+                                  <span>เลือกวันที่</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="fundMemberType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ประเภทสมาชิกกองทุนฯ</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            >
+                              {field.value
+                                ? fundMemberTypes.find((t) => t.value === field.value)?.label
+                                : "เลือกประเภทสมาชิกกองทุนฯ"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="ค้นหาประเภทสมาชิกกองทุนฯ..." />
+                            <CommandList>
+                              <CommandEmpty>ไม่พบประเภทสมาชิกกองทุนฯ</CommandEmpty>
+                              <CommandGroup>
+                                {fundMemberTypes.map((type) => (
+                                  <CommandItem
+                                    value={type.label}
+                                    key={type.value}
+                                    onSelect={() => {
+                                      form.setValue("fundMemberType", type.value)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        type.value === field.value ? "opacity-100" : "opacity-0",
+                                      )}
+                                    />
+                                    {type.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField

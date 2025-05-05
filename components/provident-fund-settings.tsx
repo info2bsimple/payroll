@@ -35,6 +35,7 @@ interface IncomeItem {
 // Define provident fund settings interface
 interface ProvidentFundSettings {
   rate: number
+  organizationCode: string
   incomeItems: {
     [employeeTypeId: string]: string[] // Array of income item IDs
   }
@@ -46,6 +47,7 @@ const rateFormSchema = z.object({
     .number()
     .min(0, "อัตราเงินหักกองทุนสำรองเลี้ยงชีพต้องไม่ต่ำกว่า 0%")
     .max(100, "อัตราเงินหักกองทุนสำรองเลี้ยงชีพต้องไม่เกิน 100%"),
+  organizationCode: z.string().optional(),
 })
 
 type RateFormValues = z.infer<typeof rateFormSchema>
@@ -107,6 +109,7 @@ const mockIncomeItems: Record<string, IncomeItem[]> = {
 const mockProvidentFundSettings: Record<string, ProvidentFundSettings> = {
   "1": {
     rate: 3,
+    organizationCode: "PVD12345",
     incomeItems: {
       "1": ["base-salary", "position-allowance"],
       "2": ["base-salary"],
@@ -133,6 +136,7 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
     resolver: zodResolver(rateFormSchema),
     defaultValues: {
       rate: 3,
+      organizationCode: "",
     },
   })
 
@@ -145,6 +149,7 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
     if (mockProvidentFundSettings[companyId]) {
       rateForm.reset({
         rate: mockProvidentFundSettings[companyId].rate,
+        organizationCode: mockProvidentFundSettings[companyId].organizationCode,
       })
     }
   }, [companyId, rateForm])
@@ -167,6 +172,7 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
     const updatedSettings = {
       ...settings,
       rate: data.rate,
+      organizationCode: data.organizationCode || "",
     }
 
     setSettings(updatedSettings)
@@ -174,7 +180,7 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
 
     toast({
       title: "บันทึกการตั้งค่าสำเร็จ",
-      description: "อัตราเงินหักกองทุนสำรองเลี้ยงชีพได้รับการอัปเดตเรียบร้อยแล้ว",
+      description: "อัตราเงินหักกองทุนสำรองเลี้ยงชีพและรหัสหน่วยงานได้รับการอัปเดตเรียบร้อยแล้ว",
     })
   }
 
@@ -279,6 +285,20 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={rateForm.control}
+                    name="organizationCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>รหัสหน่วยงาน</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="กรอกรหัสหน่วยงาน" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="flex justify-end">
@@ -291,6 +311,10 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">กำหนดอัตราเงินหัก กทช (%) ของเงินได้</h3>
                 <p className="text-xl font-semibold">{settings.rate}%</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">รหัสหน่วยงาน</h3>
+                <p className="text-xl font-semibold">{settings.organizationCode || "-"}</p>
               </div>
             </div>
           )}
