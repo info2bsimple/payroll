@@ -36,6 +36,7 @@ interface IncomeItem {
 interface ProvidentFundSettings {
   rate: number
   organizationCode: string
+  fundDestination: string // New field for "นำส่งกองทุนที่"
   incomeItems: {
     [employeeTypeId: string]: string[] // Array of income item IDs
   }
@@ -48,6 +49,7 @@ const rateFormSchema = z.object({
     .min(0, "อัตราเงินหักกองทุนสำรองเลี้ยงชีพต้องไม่ต่ำกว่า 0%")
     .max(100, "อัตราเงินหักกองทุนสำรองเลี้ยงชีพต้องไม่เกิน 100%"),
   organizationCode: z.string().optional(),
+  fundDestination: z.string().optional(), // New field for "นำส่งกองทุนที่"
 })
 
 type RateFormValues = z.infer<typeof rateFormSchema>
@@ -110,6 +112,7 @@ const mockProvidentFundSettings: Record<string, ProvidentFundSettings> = {
   "1": {
     rate: 3,
     organizationCode: "PVD12345",
+    fundDestination: "กองทุนสำรองเลี้ยงชีพ ไทยพาณิชย์ มาสเตอร์ฟันด์", // Added example data
     incomeItems: {
       "1": ["base-salary", "position-allowance"],
       "2": ["base-salary"],
@@ -137,6 +140,7 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
     defaultValues: {
       rate: 3,
       organizationCode: "",
+      fundDestination: "", // Initialize new field
     },
   })
 
@@ -150,6 +154,7 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
       rateForm.reset({
         rate: mockProvidentFundSettings[companyId].rate,
         organizationCode: mockProvidentFundSettings[companyId].organizationCode,
+        fundDestination: mockProvidentFundSettings[companyId].fundDestination, // Set value for new field
       })
     }
   }, [companyId, rateForm])
@@ -173,6 +178,7 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
       ...settings,
       rate: data.rate,
       organizationCode: data.organizationCode || "",
+      fundDestination: data.fundDestination || "", // Save new field
     }
 
     setSettings(updatedSettings)
@@ -180,7 +186,7 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
 
     toast({
       title: "บันทึกการตั้งค่าสำเร็จ",
-      description: "อัตราเงินหักกองทุนสำรองเลี้ยงชีพและรหัสหน่วยงานได้รับการอัปเดตเรียบร้อยแล้ว",
+      description: "อัตราเงินหักกองทุนสำรองเลี้ยงชีพ รหัสหน่วยงาน และสถานที่นำส่งกองทุนได้รับการอัปเดตเรียบร้อยแล้ว",
     })
   }
 
@@ -301,20 +307,43 @@ export function ProvidentFundSettings({ companyId }: ProvidentFundSettingsProps)
                   />
                 </div>
 
+                {/* New field: Fund Destination */}
+                <FormField
+                  control={rateForm.control}
+                  name="fundDestination"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>นำส่งกองทุนที่</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="ระบุชื่อกองทุนที่นำส่ง" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="flex justify-end">
                   <Button type="submit">บันทึก</Button>
                 </div>
               </form>
             </Form>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">กำหนดอัตราเงินหัก กทช (%) ของเงินได้</h3>
-                <p className="text-xl font-semibold">{settings.rate}%</p>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">กำหนดอัตราเงินหัก กทช (%) ของเงินได้</h3>
+                  <p className="text-xl font-semibold">{settings.rate}%</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">รหัสหน่วยงาน</h3>
+                  <p className="text-xl font-semibold">{settings.organizationCode || "-"}</p>
+                </div>
               </div>
+
+              {/* Display new field */}
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">รหัสหน่วยงาน</h3>
-                <p className="text-xl font-semibold">{settings.organizationCode || "-"}</p>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">นำส่งกองทุนที่</h3>
+                <p className="text-xl font-semibold">{settings.fundDestination || "-"}</p>
               </div>
             </div>
           )}
