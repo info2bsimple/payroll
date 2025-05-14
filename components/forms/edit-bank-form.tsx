@@ -25,12 +25,19 @@ const banks = [
   { label: "ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร", value: "ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร" },
 ]
 
+// Bank location options
+const bankLocations = [
+  { label: "กรุงเทพฯ", value: "กรุงเทพฯ" },
+  { label: "ต่างจังหวัด", value: "ต่างจังหวัด" },
+]
+
 // Form schema
 const formSchema = z.object({
   bank: z.string().min(1, "กรุณาเลือกธนาคาร"),
   accountName: z.string().min(1, "กรุณากรอกชื่อบัญชี"),
   accountNumber: z.string().min(1, "กรุณากรอกเลขที่บัญชี").regex(/^\d+$/, "เลขที่บัญชีต้องเป็นตัวเลขเท่านั้น"),
   branch: z.string().min(1, "กรุณากรอกสาขา"),
+  bankLocation: z.string().min(1, "กรุณาเลือกพื้นที่"),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -50,6 +57,7 @@ interface Employee {
   accountName: string
   accountNumber: string
   branch: string
+  bankLocation?: string
   salary?: number
   status: "active" | "inactive"
 }
@@ -70,6 +78,7 @@ export function EditBankForm({ employee, onSave, onCancel }: EditBankFormProps) 
       accountName: employee.accountName,
       accountNumber: employee.accountNumber,
       branch: employee.branch,
+      bankLocation: employee.bankLocation || "กรุงเทพฯ",
     },
   })
 
@@ -185,6 +194,58 @@ export function EditBankForm({ employee, onSave, onCancel }: EditBankFormProps) 
                     <FormControl>
                       <Input placeholder="กรอกสาขา" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="bankLocation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>พื้นที่</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value ? bankLocations.find((loc) => loc.value === field.value)?.label : "เลือกพื้นที่"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="ค้นหาพื้นที่..." />
+                          <CommandList>
+                            <CommandEmpty>ไม่พบพื้นที่</CommandEmpty>
+                            <CommandGroup>
+                              {bankLocations.map((location) => (
+                                <CommandItem
+                                  value={location.label}
+                                  key={location.value}
+                                  onSelect={() => {
+                                    form.setValue("bankLocation", location.value)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      location.value === field.value ? "opacity-100" : "opacity-0",
+                                    )}
+                                  />
+                                  {location.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -2,67 +2,122 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { ArrowLeft, PenSquare, XCircle, CheckCircle } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Pencil } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { mockEmployees } from "@/data/mock-data"
-import { EditEmployeeForm } from "@/components/forms/edit-employee-form"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { EditBankForm } from "@/components/forms/edit-bank-form"
 import { EditSalaryForm } from "@/components/forms/edit-salary-form"
-
-interface Employee {
-  id: string
-  prefix: string
-  firstName: string
-  lastName: string
-  idCardNumber: string
-  employeeCode?: string
-  providentFundId?: string
-  dateOfBirth?: string
-  fundMembershipDate?: string
-  fundMemberType?: string
-  employeeType: string
-  company: string
-  department: string
-  position: string
-  startDate: string
-  bank: string
-  accountName: string
-  accountNumber: string
-  branch: string
-  salary?: number
-  status: "active" | "inactive"
-  hourlyRate?: number
-  positionAllowance?: number
-  costOfLiving?: number
-}
+import { EditEmployeeForm } from "@/components/forms/edit-employee-form"
+import { useToast } from "@/hooks/use-toast"
+import { mockEmployees } from "@/data/mock-data"
 
 export default function EmployeeDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [employee, setEmployee] = useState<Employee | null>(null)
-  const [activeTab, setActiveTab] = useState("info")
+  const { toast } = useToast()
 
-  // Add these state variables
-  const [isEditingEmployee, setIsEditingEmployee] = useState(false)
-  const [isEditingBank, setIsEditingBank] = useState(false)
-  const [isEditingSalary, setIsEditingSalary] = useState(false)
+  const [employee, setEmployee] = useState<any>(null)
+  const [isEditBankActive, setIsEditBankActive] = useState(false)
+  const [isEditSalaryActive, setIsEditSalaryActive] = useState(false)
+  const [isEditEmployeeActive, setIsEditEmployeeActive] = useState(false)
+  const [isStatusChangeDialogOpen, setIsStatusChangeDialogOpen] = useState(false)
 
   useEffect(() => {
     // In a real app, fetch from API
     const employeeId = params.id as string
-    const foundEmployee = mockEmployees.find((emp) => emp.id === employeeId)
+    const foundEmployee = mockEmployees.find((e) => e.id === employeeId)
 
     if (foundEmployee) {
       setEmployee(foundEmployee)
     } else {
-      // Redirect to main page if employee not found
+      // Redirect to payroll page if employee not found
       router.push("/payroll")
     }
   }, [params.id, router])
+
+  const handleSaveBank = (data: Partial<any>) => {
+    if (!employee) return
+
+    const updatedEmployee = {
+      ...employee,
+      ...data,
+    }
+
+    // In a real app, this would be an API call
+    setEmployee(updatedEmployee)
+    setIsEditBankActive(false)
+
+    toast({
+      title: "แก้ไขข้อมูลธนาคารสำเร็จ",
+      description: "ข้อมูลธนาคารของพนักงานได้รับการอัปเดตเรียบร้อยแล้ว",
+    })
+  }
+
+  const handleSaveSalary = (data: Partial<any>) => {
+    if (!employee) return
+
+    const updatedEmployee = {
+      ...employee,
+      ...data,
+    }
+
+    // In a real app, this would be an API call
+    setEmployee(updatedEmployee)
+    setIsEditSalaryActive(false)
+
+    toast({
+      title: "แก้ไขข้อมูลเงินเดือนสำเร็จ",
+      description: "ข้อมูลเงินเดือนของพนักงานได้รับการอัปเดตเรียบร้อยแล้ว",
+    })
+  }
+
+  const handleEditEmployee = (data: Partial<any>) => {
+    if (!employee) return
+
+    const updatedEmployee = {
+      ...employee,
+      ...data,
+    }
+
+    // In a real app, this would be an API call
+    setEmployee(updatedEmployee)
+    setIsEditEmployeeActive(false)
+
+    toast({
+      title: "แก้ไขข้อมูลพนักงานสำเร็จ",
+      description: `ข้อมูลของ ${data.prefix}${data.firstName} ${data.lastName} ได้รับการอัปเดตเรียบร้อยแล้ว`,
+    })
+  }
+
+  const handleStatusChange = () => {
+    if (!employee) return
+
+    const newStatus = employee.status === "active" ? "inactive" : "active"
+    const updatedEmployee = {
+      ...employee,
+      status: newStatus,
+    }
+
+    // In a real app, this would be an API call
+    setEmployee(updatedEmployee)
+    setIsStatusChangeDialogOpen(false)
+
+    toast({
+      title: "เปลี่ยนสถานะพนักงานสำเร็จ",
+      description: `สถานะของพนักงานได้ถูกเปลี่ยนเป็น${newStatus === "active" ? "ใช้งาน" : "ไม่ใช้งาน"}เรียบร้อยแล้ว`,
+    })
+  }
 
   if (!employee) {
     return <div className="container mx-auto p-6">กำลังโหลดข้อมูล...</div>
@@ -70,332 +125,247 @@ export default function EmployeeDetailPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <Button variant="outline" onClick={() => router.push("/payroll")} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          กลับไปหน้ารายการพนักงาน
-        </Button>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              {employee.id} - {employee.prefix}
-              {employee.firstName} {employee.lastName}
-              <Badge variant={employee.status === "active" ? "success" : "destructive"}>
+      <div className="mb-6 flex flex-wrap justify-between items-start gap-4">
+        <div>
+          <Button variant="outline" onClick={() => router.push("/payroll")} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            กลับไปหน้ารายการพนักงาน
+          </Button>
+          <h1 className="text-2xl font-bold">
+            {employee.prefix}
+            {employee.firstName} {employee.lastName}
+          </h1>
+          <div className="flex items-center mt-1">
+            <p className="text-muted-foreground">รหัสพนักงาน: {employee.id}</p>
+            <span className="mx-2">•</span>
+            <p className="text-muted-foreground">แผนก: {employee.department}</p>
+            <span className="mx-2">•</span>
+            <div>
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  employee.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                }`}
+              >
                 {employee.status === "active" ? "ใช้งาน" : "ไม่ใช้งาน"}
-              </Badge>
-            </h1>
-            <p className="text-muted-foreground">
-              {employee.position} • {employee.department}
-            </p>
+              </span>
+            </div>
           </div>
-          <Button onClick={() => router.push(`/payroll/${employee.id}/edit`)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            แก้ไขข้อมูล
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setIsEditEmployeeActive(true)}>
+            <PenSquare className="mr-2 h-4 w-4" />
+            แก้ไขข้อมูลพนักงาน
+          </Button>
+          <Button variant="outline" onClick={() => setIsStatusChangeDialogOpen(true)}>
+            {employee.status === "active" ? (
+              <XCircle className="mr-2 h-4 w-4" />
+            ) : (
+              <CheckCircle className="mr-2 h-4 w-4" />
+            )}
+            {employee.status === "active" ? "ยกเลิกการใช้งาน" : "เปิดใช้งาน"}
           </Button>
         </div>
       </div>
 
-      {/* Edit Employee Form */}
-      {isEditingEmployee && employee && (
-        <EditEmployeeForm
-          employee={employee}
-          onSave={(updatedEmployee) => {
-            setEmployee({ ...employee, ...updatedEmployee })
-            setIsEditingEmployee(false)
-          }}
-          onCancel={() => setIsEditingEmployee(false)}
-          existingEmployees={mockEmployees.filter((emp) => emp.id !== employee.id)}
-        />
-      )}
-
-      {/* Edit Bank Form */}
-      {isEditingBank && employee && (
-        <EditBankForm
-          employee={employee}
-          onSave={(updatedEmployee) => {
-            setEmployee({ ...employee, ...updatedEmployee })
-            setIsEditingBank(false)
-          }}
-          onCancel={() => setIsEditingBank(false)}
-        />
-      )}
-
-      {/* Edit Salary Form */}
-      {isEditingSalary && employee && (
-        <EditSalaryForm
-          employee={employee}
-          onSave={(updatedEmployee) => {
-            setEmployee({ ...employee, ...updatedEmployee })
-            setIsEditingSalary(false)
-          }}
-          onCancel={() => setIsEditingSalary(false)}
-        />
-      )}
-
-      <Tabs defaultValue="info" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
+      <Tabs defaultValue="info">
+        <TabsList>
           <TabsTrigger value="info">ข้อมูลพนักงาน</TabsTrigger>
-          <TabsTrigger value="salary">เงินเดือน</TabsTrigger>
-          <TabsTrigger value="work-hours">จำนวนวันทำงาน</TabsTrigger>
-          <TabsTrigger value="benefits">สิทธิประโยชน์</TabsTrigger>
+          <TabsTrigger value="finance">ข้อมูลการเงิน</TabsTrigger>
+          <TabsTrigger value="tax">ข้อมูลภาษี</TabsTrigger>
+          <TabsTrigger value="social-security">ประกันสังคม</TabsTrigger>
+          <TabsTrigger value="provident-fund">กองทุนสำรองเลี้ยงชีพ</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="info">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">ข้อมูลพนักงาน</h3>
-                  <Button variant="outline" size="sm" onClick={() => setIsEditingEmployee(true)}>
-                    <Pencil className="mr-2 h-3 w-3" />
-                    แก้ไข
-                  </Button>
-                </div>
-                <Separator className="mb-4" />
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">คำนำหน้า</div>
-                    <div className="font-medium">{employee.prefix}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">ชื่อ</div>
-                    <div className="font-medium">{employee.firstName}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">นามสกุล</div>
-                    <div className="font-medium">{employee.lastName}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">เลขบัตรประจำตัวประชาชน</div>
-                    <div className="font-medium">{employee.idCardNumber}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">ประเภทพนักงาน</div>
-                    <div className="font-medium">{employee.employeeType}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">สังกัดบริษัท</div>
-                    <div className="font-medium">{employee.company}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">วันที่เริ่มงาน</div>
-                    <div className="font-medium">{employee.startDate || "-"}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">แผนก</div>
-                    <div className="font-medium">{employee.department}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">ตำแหน่ง</div>
-                    <div className="font-medium">{employee.position}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">รหัสพนักงาน</div>
-                    <div className="font-medium">{employee.employeeCode || "-"}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">รหัสสมาชิกกองทุนสำรองเลี้ยงชีพ</div>
-                    <div className="font-medium">{employee.providentFundId || "-"}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">วันเดือนปีเกิด</div>
-                    <div className="font-medium">{employee.dateOfBirth || "-"}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">วันที่เข้าเป็นสมาชิกกองทุน</div>
-                    <div className="font-medium">{employee.fundMembershipDate || "-"}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">ประเภทสมาชิกกองทุนฯ</div>
-                    <div className="font-medium">{employee.fundMemberType || "-"}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">ข้อมูลบัญชีธนาคาร</h3>
-                  <Button variant="outline" size="sm" onClick={() => setIsEditingBank(true)}>
-                    <Pencil className="mr-2 h-3 w-3" />
-                    แก้ไข
-                  </Button>
-                </div>
-                <Separator className="mb-4" />
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">ธนาคาร</div>
-                    <div className="font-medium">{employee.bank}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">ชื่อบัญชี</div>
-                    <div className="font-medium">{employee.accountName}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">เลขที่บัญชี</div>
-                    <div className="font-medium">{employee.accountNumber}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-sm text-muted-foreground">สาขา</div>
-                    <div className="font-medium">{employee.branch}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="salary">
+        <TabsContent value="info" className="space-y-6 mt-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">สรุปเงินเดือน</h3>
-                <Button variant="outline" size="sm" onClick={() => setIsEditingSalary(true)}>
-                  <Pencil className="mr-2 h-3 w-3" />
-                  แก้ไข
-                </Button>
-              </div>
-              <Separator className="mb-4" />
+            <CardHeader>
+              <CardTitle>ข้อมูลทั่วไป</CardTitle>
+              <CardDescription>ข้อมูลพื้นฐานของพนักงาน</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">ชื่อ-นามสกุล</h3>
+                    <p className="text-lg font-medium mt-1">
+                      {employee.prefix}
+                      {employee.firstName} {employee.lastName}
+                    </p>
+                  </div>
 
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">เงินเดือนพื้นฐาน</p>
-                    <p className="text-xl font-semibold">
-                      {employee.salary ? `${employee.salary.toLocaleString()} บาท` : "-"}
-                    </p>
+                    <h3 className="text-sm font-medium text-muted-foreground">เลขบัตรประจำตัวประชาชน</h3>
+                    <p className="text-lg font-medium mt-1">{employee.idCardNumber}</p>
                   </div>
+
                   <div>
-                    <p className="text-sm text-muted-foreground">รายได้เพิ่มเติม</p>
-                    <p className="text-xl font-semibold">
-                      {(employee.positionAllowance || 0) + (employee.costOfLiving || 0) > 0
-                        ? `${((employee.positionAllowance || 0) + (employee.costOfLiving || 0)).toLocaleString()} บาท`
-                        : "-"}
-                    </p>
+                    <h3 className="text-sm font-medium text-muted-foreground">วันเดือนปีเกิด</h3>
+                    <p className="text-lg font-medium mt-1">{employee.dateOfBirth || "-"}</p>
                   </div>
+
                   <div>
-                    <p className="text-sm text-muted-foreground">ภาษีและประกันสังคม</p>
-                    <p className="text-xl font-semibold text-red-500">-0 บาท</p>
+                    <h3 className="text-sm font-medium text-muted-foreground">วันที่เริ่มงาน</h3>
+                    <p className="text-lg font-medium mt-1">{employee.startDate || "-"}</p>
                   </div>
                 </div>
 
-                <Separator />
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">ประเภทพนักงาน</h3>
+                    <p className="text-lg font-medium mt-1">{employee.employeeType}</p>
+                  </div>
 
-                <div>
-                  <p className="text-lg text-muted-foreground">รวมรับสุทธิ</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {employee.salary
-                      ? `${(
-                          (employee.salary || 0) + (employee.positionAllowance || 0) + (employee.costOfLiving || 0)
-                        ).toLocaleString()} บาท`
-                      : "-"}
-                  </p>
-                </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">บริษัท</h3>
+                    <p className="text-lg font-medium mt-1">{employee.company}</p>
+                  </div>
 
-                <Separator />
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">แผนก</h3>
+                    <p className="text-lg font-medium mt-1">{employee.department}</p>
+                  </div>
 
-                <h4 className="text-lg font-medium mb-4">เงินเดือนและรายได้เสริมประจำเดือน</h4>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 px-4">ลำดับ</th>
-                        <th className="text-left py-2 px-4">รายการ</th>
-                        <th className="text-right py-2 px-4">จำนวนเงิน(บาท)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b">
-                        <td className="py-2 px-4">1</td>
-                        <td className="py-2 px-4">ฐานเงินเดือน</td>
-                        <td className="text-right py-2 px-4">
-                          {employee.salary
-                            ? `${employee.salary.toLocaleString()} (${employee.hourlyRate || 125} บาท/ชั่วโมง)`
-                            : "-"}
-                        </td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-4">2</td>
-                        <td className="py-2 px-4">เงินประจำตำแหน่ง</td>
-                        <td className="text-right py-2 px-4">
-                          {employee.positionAllowance ? `${employee.positionAllowance.toLocaleString()}` : "-"}
-                        </td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-4">3</td>
-                        <td className="py-2 px-4">ค่าครองชีพ</td>
-                        <td className="text-right py-2 px-4">
-                          {employee.costOfLiving ? `${employee.costOfLiving.toLocaleString()}` : "-"}
-                        </td>
-                      </tr>
-                    </tbody>
-                    <tfoot>
-                      <tr className="bg-muted/50">
-                        <td colSpan={2} className="py-2 px-4 font-medium">
-                          รวมเงินเดือนและรายได้เสริมประจำเดือน
-                        </td>
-                        <td className="text-right py-2 px-4 font-medium">
-                          {(
-                            (employee.salary || 0) +
-                            (employee.positionAllowance || 0) +
-                            (employee.costOfLiving || 0)
-                          ).toLocaleString()}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">ตำแหน่ง</h3>
+                    <p className="text-lg font-medium mt-1">{employee.position}</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle>ข้อมูลบัญชีธนาคาร</CardTitle>
+                <CardDescription>ข้อมูลบัญชีธนาคารสำหรับการโอนเงินเดือน</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setIsEditBankActive(true)}>
+                <PenSquare className="mr-2 h-4 w-4" />
+                แก้ไข
+              </Button>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {isEditBankActive ? (
+                <EditBankForm employee={employee} onSave={handleSaveBank} onCancel={() => setIsEditBankActive(false)} />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">ธนาคาร</h3>
+                      <p className="text-lg font-medium mt-1">{employee.bank}</p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">ชื่อบัญชี</h3>
+                      <p className="text-lg font-medium mt-1">{employee.accountName}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">เลขที่บัญชี</h3>
+                      <p className="text-lg font-medium mt-1">{employee.accountNumber}</p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">สาขา</h3>
+                      <p className="text-lg font-medium mt-1">{employee.branch}</p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">พื้นที่</h3>
+                      <p className="text-lg font-medium mt-1">{employee.bankLocation || "กรุงเทพฯ"}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="work-hours">
+        <TabsContent value="finance" className="space-y-6 mt-6">
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium mb-4">จำนวนวันทำงานต่อเดือน</h3>
-              <Separator className="mb-4" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle>ข้อมูลเงินเดือน</CardTitle>
+                <CardDescription>ข้อมูลเงินเดือนและค่าตอบแทน</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setIsEditSalaryActive(true)}>
+                <PenSquare className="mr-2 h-4 w-4" />
+                แก้ไข
+              </Button>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {isEditSalaryActive ? (
+                <EditSalaryForm
+                  employee={employee}
+                  onSave={handleSaveSalary}
+                  onCancel={() => setIsEditSalaryActive(false)}
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">เงินเดือน</h3>
+                      <p className="text-lg font-medium mt-1">
+                        {employee.salary ? `${employee.salary.toLocaleString()} บาท` : "-"}
+                      </p>
+                    </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">จำนวนวันทำงานต่อเดือน</p>
-                    <p className="text-xl font-semibold">30 วัน/เดือน</p>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">อัตราค่าจ้างรายวัน</h3>
+                      <p className="text-lg font-medium mt-1">
+                        {employee.dailyRate ? `${employee.dailyRate.toLocaleString()} บาท` : "-"}
+                      </p>
+                    </div>
                   </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">ค่าตำแหน่ง</h3>
+                      <p className="text-lg font-medium mt-1">
+                        {employee.positionAllowance ? `${employee.positionAllowance.toLocaleString()} บาท` : "-"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">ค่าครองชีพ</h3>
+                      <p className="text-lg font-medium mt-1">
+                        {employee.costOfLiving ? `${employee.costOfLiving.toLocaleString()} บาท` : "-"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="provident-fund" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>ข้อมูลกองทุนสำรองเลี้ยงชีพ</CardTitle>
+              <CardDescription>ข้อมูลการเป็นสมาชิกกองทุนสำรองเลี้ยงชีพ</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">จำนวนชั่วโมงทำงานต่อวัน</p>
-                    <p className="text-xl font-semibold">8 ชั่วโมง/วัน</p>
+                    <h3 className="text-sm font-medium text-muted-foreground">รหัสกองทุน</h3>
+                    <p className="text-lg font-medium mt-1">{employee.providentFundId || "-"}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">วันที่เข้าเป็นสมาชิกกองทุน</h3>
+                    <p className="text-lg font-medium mt-1">{employee.fundMembershipDate || "-"}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">จำนวนชั่วโมงทำงานต่อเดือน</p>
-                    <p className="text-xl font-semibold">240 ชั่วโมง/เดือน</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">อัตราค่าล่วงเวลา</p>
-                    <p className="text-xl font-semibold">- บาท/ชั่วโมง</p>
+                    <h3 className="text-sm font-medium text-muted-foreground">ประเภทสมาชิกกองทุนฯ</h3>
+                    <p className="text-lg font-medium mt-1">{employee.fundMemberType || "-"}</p>
                   </div>
                 </div>
               </div>
@@ -403,95 +373,61 @@ export default function EmployeeDetailPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="benefits">
-          <div className="grid grid-cols-1 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-medium mb-4">สิทธิประโยชน์อื่นๆ ที่เป็นจำนวนเงิน</h3>
-                <Separator className="mb-4" />
+        <TabsContent value="tax" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>ข้อมูลภาษี</CardTitle>
+              <CardDescription>ข้อมูลสำหรับการคำนวณภาษี</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center py-8 text-muted-foreground">ยังไม่มีข้อมูลภาษี</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 px-4">ลำดับ</th>
-                        <th className="text-left py-2 px-4">รายการ</th>
-                        <th className="text-center py-2 px-4">จำนวน</th>
-                        <th className="text-left py-2 px-4">รายละเอียด</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b">
-                        <td className="py-2 px-4">1</td>
-                        <td className="py-2 px-4">ค่าล่วงเวลา /ค่าทำงานล่วงเวลาในวันหยุด</td>
-                        <td className="text-center py-2 px-4">-</td>
-                        <td className="py-2 px-4">เท่า ของรายได้ต่อชั่วโมง</td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-4">2</td>
-                        <td className="py-2 px-4">ค่าล่วงเวลา /ค่าทำงานล่วงเวลา ในวันหยุด</td>
-                        <td className="text-center py-2 px-4">-</td>
-                        <td className="py-2 px-4">เท่า ของรายได้ต่อชั่วโมง</td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-4">3</td>
-                        <td className="py-2 px-4">ค่าล่วงเวลา /ค่าทำงานล่วงเวลา ในวันหยุด</td>
-                        <td className="text-center py-2 px-4">-</td>
-                        <td className="py-2 px-4">เท่า ของรายได้ต่อชั่วโมง</td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-4">4</td>
-                        <td className="py-2 px-4">ค่าเดินทางประจำเดือน</td>
-                        <td className="text-center py-2 px-4">-</td>
-                        <td className="py-2 px-4">-</td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-4">5</td>
-                        <td className="py-2 px-4">โบนัส</td>
-                        <td className="text-center py-2 px-4">-</td>
-                        <td className="py-2 px-4">-</td>
-                      </tr>
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td colSpan={4} className="py-2 px-4 text-center text-muted-foreground">
-                          สิทธิประโยชน์อื่นๆ ที่เป็นจำนวนเงิน
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-medium mb-4">สิทธิประโยชน์อื่นๆ ที่ไม่ใช่จำนวนเงิน</h3>
-                <Separator className="mb-4" />
-
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 px-4">ลำดับ</th>
-                        <th className="text-left py-2 px-4">รายการ</th>
-                        <th className="text-left py-2 px-4">รายละเอียด</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={3} className="py-6 px-4 text-center text-muted-foreground">
-                          ไม่มีข้อมูล
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="social-security" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>ข้อมูลประกันสังคม</CardTitle>
+              <CardDescription>ข้อมูลประกันสังคม</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center py-8 text-muted-foreground">ยังไม่มีข้อมูลประกันสังคม</p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
+
+      {isEditEmployeeActive && (
+        <EditEmployeeForm
+          employee={employee}
+          onSave={handleEditEmployee}
+          onCancel={() => setIsEditEmployeeActive(false)}
+          existingEmployees={mockEmployees.filter((e) => e.id !== employee.id)}
+        />
+      )}
+
+      {/* Status Change Dialog */}
+      <AlertDialog open={isStatusChangeDialogOpen} onOpenChange={setIsStatusChangeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {employee.status === "active" ? "ยกเลิกการใช้งานพนักงาน" : "เปิดใช้งานพนักงาน"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {employee.status === "active"
+                ? `คุณต้องการยกเลิกการใช้งานของ ${employee.prefix}${employee.firstName} ${employee.lastName} ใช่หรือไม่?`
+                : `คุณต้องการเปิดใช้งาน ${employee.prefix}${employee.firstName} ${employee.lastName} ใช่หรือไม่?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction onClick={handleStatusChange}>
+              {employee.status === "active" ? "ยกเลิกการใช้งาน" : "เปิดใช้งาน"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

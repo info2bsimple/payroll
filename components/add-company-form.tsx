@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 
 // Bank options
 const banks = [
@@ -32,6 +33,67 @@ const accountTypes = [
   { label: "ฝากประจำ", value: "ฝากประจำ" },
 ]
 
+// Provinces
+const provinces = [
+  { label: "กรุงเทพมหานคร", value: "กรุงเทพมหานคร" },
+  { label: "นนทบุรี", value: "นนทบุรี" },
+  { label: "ปทุมธานี", value: "ปทุมธานี" },
+  { label: "สมุทรปราการ", value: "สมุทรปราการ" },
+  { label: "เชียงใหม่", value: "เชียงใหม่" },
+  { label: "ชลบุรี", value: "ชลบุรี" },
+  { label: "ภูเก็ต", value: "ภูเก็ต" },
+  { label: "ขอนแก่น", value: "ขอนแก่น" },
+  { label: "สงขลา", value: "สงขลา" },
+]
+
+// Districts by province
+const districtsByProvince: Record<string, { label: string; value: string }[]> = {
+  กรุงเทพมหานคร: [
+    { label: "บางรัก", value: "บางรัก" },
+    { label: "ปทุมวัน", value: "ปทุมวัน" },
+    { label: "สาทร", value: "สาทร" },
+    { label: "พญาไท", value: "พญาไท" },
+    { label: "บางนา", value: "บางนา" },
+    { label: "จตุจักร", value: "จตุจักร" },
+  ],
+  นนทบุรี: [
+    { label: "เมืองนนทบุรี", value: "เมืองนนทบุรี" },
+    { label: "บางกรวย", value: "บางกรวย" },
+    { label: "บางใหญ่", value: "บางใหญ่" },
+    { label: "ปากเกร็ด", value: "ปากเกร็ด" },
+  ],
+  ปทุมธานี: [
+    { label: "เมืองปทุมธานี", value: "เมืองปทุมธานี" },
+    { label: "คลองหลวง", value: "คลองหลวง" },
+    { label: "ธัญบุรี", value: "ธัญบุรี" },
+    { label: "ลำลูกกา", value: "ลำลูกกา" },
+  ],
+}
+
+// Subdistricts by district
+const subdistrictsByDistrict: Record<string, { label: string; value: string }[]> = {
+  บางรัก: [
+    { label: "สีลม", value: "สีลม" },
+    { label: "บางรัก", value: "บางรัก" },
+    { label: "สี่พระยา", value: "สี่พระยา" },
+  ],
+  ปทุมวัน: [
+    { label: "รองเมือง", value: "รองเมือง" },
+    { label: "ปทุมวัน", value: "ปทุมวัน" },
+    { label: "ลุมพินี", value: "ลุมพินี" },
+  ],
+  เมืองนนทบุรี: [
+    { label: "บางกระสอ", value: "บางกระสอ" },
+    { label: "ตลาดขวัญ", value: "ตลาดขวัญ" },
+    { label: "สวนใหญ่", value: "สวนใหญ่" },
+  ],
+  ปากเกร็ด: [
+    { label: "ปากเกร็ด", value: "ปากเกร็ด" },
+    { label: "บางพูด", value: "บางพูด" },
+    { label: "บางตลาด", value: "บางตลาด" },
+  ],
+}
+
 // Form schema
 const formSchema = z.object({
   // Company Information
@@ -49,6 +111,13 @@ const formSchema = z.object({
   accountNumber: z.string().min(1, "กรุณากรอกเลขที่บัญชี").regex(/^\d+$/, "เลขที่บัญชีต้องเป็นตัวเลขเท่านั้น"),
   branch: z.string().min(1, "กรุณากรอกสาขาธนาคาร"),
   accountType: z.string().min(1, "กรุณาเลือกประเภทบัญชี"),
+
+  // Company Address
+  address: z.string().min(1, "กรุณากรอกที่อยู่"),
+  province: z.string().min(1, "กรุณาเลือกจังหวัด"),
+  district: z.string().min(1, "กรุณาเลือกอำเภอ/เขต"),
+  subdistrict: z.string().min(1, "กรุณาเลือกตำบล/แขวง"),
+  postalCode: z.string().length(5, "รหัสไปรษณีย์ต้องมี 5 หลัก").regex(/^\d+$/, "รหัสไปรษณีย์ต้องเป็นตัวเลขเท่านั้น"),
 
   // Employer Information
   socialSecurityNumber: z
@@ -97,11 +166,33 @@ export function AddCompanyForm({
       accountNumber: "",
       branch: "",
       accountType: "",
+      address: "",
+      province: "",
+      district: "",
+      subdistrict: "",
+      postalCode: "",
       socialSecurityNumber: "",
       branchNumber: "",
       socialSecurityRate: 5,
     },
   })
+
+  const watchProvince = form.watch("province")
+  const watchDistrict = form.watch("district")
+
+  // Reset dependent fields when province changes
+  const handleProvinceChange = (value: string) => {
+    form.setValue("province", value)
+    form.setValue("district", "")
+    form.setValue("subdistrict", "")
+    form.setValue("postalCode", "")
+  }
+
+  // Reset dependent fields when district changes
+  const handleDistrictChange = (value: string) => {
+    form.setValue("district", value)
+    form.setValue("subdistrict", "")
+  }
 
   const handleSubmit = (data: FormValues) => {
     // Check if registration number already exists (only for new companies)
@@ -301,6 +392,205 @@ export function AddCompanyForm({
                           </Command>
                         </PopoverContent>
                       </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Company Address Section */}
+            <div>
+              <h3 className="text-lg font-medium">ที่อยู่บริษัท</h3>
+              <Separator className="my-2" />
+              <div className="space-y-4 mt-4">
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ที่อยู่</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="กรอกที่อยู่ เลขที่ ถนน ซอย" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="province"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>จังหวัด</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            >
+                              {field.value ? provinces.find((p) => p.value === field.value)?.label : "เลือกจังหวัด"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="ค้นหาจังหวัด..." />
+                            <CommandList>
+                              <CommandEmpty>ไม่พบจังหวัด</CommandEmpty>
+                              <CommandGroup>
+                                {provinces.map((province) => (
+                                  <CommandItem
+                                    value={province.label}
+                                    key={province.value}
+                                    onSelect={() => handleProvinceChange(province.value)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        province.value === field.value ? "opacity-100" : "opacity-0",
+                                      )}
+                                    />
+                                    {province.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="district"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>อำเภอ/เขต</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              disabled={!watchProvince}
+                              className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            >
+                              {field.value && watchProvince
+                                ? districtsByProvince[watchProvince]?.find((d) => d.value === field.value)?.label ||
+                                  "เลือกอำเภอ/เขต"
+                                : "เลือกอำเภอ/เขต"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="ค้นหาอำเภอ/เขต..." />
+                            <CommandList>
+                              <CommandEmpty>ไม่พบอำเภอ/เขต</CommandEmpty>
+                              <CommandGroup>
+                                {watchProvince &&
+                                  districtsByProvince[watchProvince]?.map((district) => (
+                                    <CommandItem
+                                      value={district.label}
+                                      key={district.value}
+                                      onSelect={() => handleDistrictChange(district.value)}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          district.value === field.value ? "opacity-100" : "opacity-0",
+                                        )}
+                                      />
+                                      {district.label}
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="subdistrict"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ตำบล/แขวง</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              disabled={!watchDistrict}
+                              className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            >
+                              {field.value && watchDistrict
+                                ? subdistrictsByDistrict[watchDistrict]?.find((s) => s.value === field.value)?.label ||
+                                  "เลือกตำบล/แขวง"
+                                : "เลือกตำบล/แขวง"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="ค้นหาตำบล/แขวง..." />
+                            <CommandList>
+                              <CommandEmpty>ไม่พบตำบล/แขวง</CommandEmpty>
+                              <CommandGroup>
+                                {watchDistrict &&
+                                  subdistrictsByDistrict[watchDistrict]?.map((subdistrict) => (
+                                    <CommandItem
+                                      value={subdistrict.label}
+                                      key={subdistrict.value}
+                                      onSelect={() => {
+                                        form.setValue("subdistrict", subdistrict.value)
+                                        // Set postal code based on subdistrict (mock data)
+                                        form.setValue("postalCode", "10500")
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          subdistrict.value === field.value ? "opacity-100" : "opacity-0",
+                                        )}
+                                      />
+                                      {subdistrict.label}
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="postalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>รหัสไปรษณีย์</FormLabel>
+                      <FormControl>
+                        <Input placeholder="10500" maxLength={5} {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

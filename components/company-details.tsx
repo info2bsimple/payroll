@@ -9,6 +9,11 @@ interface CompanyDetailsProps {
     accountNumber: string
     branch: string
     accountType: string
+    address?: string
+    province?: string
+    district?: string
+    subdistrict?: string
+    postalCode?: string
     socialSecurityNumber: string
     branchNumber: string
     socialSecurityRate: number
@@ -52,6 +57,33 @@ export function CompanyDetails({ company, onEdit }: CompanyDetailsProps) {
                   {company.status === "active" ? "ใช้งาน" : "ไม่ใช้งาน"}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Company Address Section */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-muted px-4 py-2 font-medium">ที่อยู่บริษัท</div>
+          <div className="divide-y">
+            <div className="grid grid-cols-1 md:grid-cols-3 px-4 py-3">
+              <div className="text-sm text-muted-foreground mb-1 md:mb-0">ที่อยู่</div>
+              <div className="md:col-span-2 font-medium">{company.address || "-"}</div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 px-4 py-3">
+              <div className="text-sm text-muted-foreground mb-1 md:mb-0">จังหวัด</div>
+              <div className="md:col-span-2 font-medium">{company.province || "-"}</div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 px-4 py-3">
+              <div className="text-sm text-muted-foreground mb-1 md:mb-0">อำเภอ/เขต</div>
+              <div className="md:col-span-2 font-medium">{company.district || "-"}</div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 px-4 py-3">
+              <div className="text-sm text-muted-foreground mb-1 md:mb-0">ตำบล/แขวง</div>
+              <div className="md:col-span-2 font-medium">{company.subdistrict || "-"}</div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 px-4 py-3">
+              <div className="text-sm text-muted-foreground mb-1 md:mb-0">รหัสไปรษณีย์</div>
+              <div className="md:col-span-2 font-medium">{company.postalCode || "-"}</div>
             </div>
           </div>
         </div>

@@ -15,6 +15,8 @@ import { DeductionItemsTable } from "@/components/deduction-items-table"
 import { SocialSecuritySettings } from "@/components/social-security-settings"
 import { TaxCalculationSettings } from "@/components/tax-calculation-settings"
 import { ProvidentFundSettings } from "@/components/provident-fund-settings"
+import { BankFeesSettings } from "@/components/bank-fees-settings"
+import { AccountCodesSettings } from "@/components/account-codes-settings"
 import { AddCompanyForm } from "@/components/add-company-form"
 import { useToast } from "@/hooks/use-toast"
 
@@ -27,6 +29,11 @@ interface Company {
   accountNumber: string
   branch: string
   accountType: string
+  address?: string
+  province?: string
+  district?: string
+  subdistrict?: string
+  postalCode?: string
   socialSecurityNumber: string
   branchNumber: string
   socialSecurityRate: number
@@ -43,6 +50,11 @@ const mockCompanies: Company[] = [
     accountNumber: "1234567890",
     branch: "สาขาสีลม",
     accountType: "ออมทรัพย์",
+    address: "เลขที่ 123 อาคาร เทสต์ ชั้น 10 ถนนสีลม ซอย 5",
+    province: "กรุงเทพมหานคร",
+    district: "บางรัก",
+    subdistrict: "สีลม",
+    postalCode: "10500",
     socialSecurityNumber: "1234567890",
     branchNumber: "00",
     socialSecurityRate: 5,
@@ -56,6 +68,11 @@ const mockCompanies: Company[] = [
     accountNumber: "9876543210",
     branch: "สาขาอโศก",
     accountType: "ออมทรัพย์",
+    address: "เลขที่ 456 อาคาร โค้ด ชั้น 20 ถนนสุขุมวิท",
+    province: "กรุงเทพมหานคร",
+    district: "วัฒนา",
+    subdistrict: "คลองตัน",
+    postalCode: "10110",
     socialSecurityNumber: "0987654321",
     branchNumber: "01",
     socialSecurityRate: 5,
@@ -69,6 +86,11 @@ const mockCompanies: Company[] = [
     accountNumber: "5678901234",
     branch: "สาขาสยาม",
     accountType: "กระแสรายวัน",
+    address: "เลขที่ 789 ถนนพระราม 1",
+    province: "กรุงเทพมหานคร",
+    district: "ปทุมวัน",
+    subdistrict: "ปทุมวัน",
+    postalCode: "10330",
     socialSecurityNumber: "2345678901",
     branchNumber: "02",
     socialSecurityRate: 5,
@@ -205,6 +227,12 @@ export default function CompanyDetailPage() {
           <TabsTrigger value="provident-fund" className="whitespace-nowrap mb-2 sm:mb-0">
             กองทุนสำรองเลี้ยงชีพ
           </TabsTrigger>
+          <TabsTrigger value="bank-fees" className="whitespace-nowrap mb-2 sm:mb-0">
+            ค่าธรรมเนียม
+          </TabsTrigger>
+          <TabsTrigger value="account-codes" className="whitespace-nowrap mb-2 sm:mb-0">
+            รหัสบัญชี
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
@@ -311,6 +339,30 @@ export default function CompanyDetailPage() {
             </CardHeader>
             <CardContent>
               <ProvidentFundSettings companyId={company.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bank-fees">
+          <Card>
+            <CardHeader>
+              <CardTitle>ตั้งค่าค่าธรรมเนียม</CardTitle>
+              <CardDescription>กำหนดค่าธรรมเนียมการโอนเงินเข้าบัญชีธนาคาร</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BankFeesSettings companyId={company.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="account-codes">
+          <Card>
+            <CardHeader>
+              <CardTitle>ตั้งค่ารหัสบัญชี</CardTitle>
+              <CardDescription>กำหนดรหัสบัญชีของรายการเงินได้ รายการเงินหัก</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AccountCodesSettings companyId={company.id} />
             </CardContent>
           </Card>
         </TabsContent>
